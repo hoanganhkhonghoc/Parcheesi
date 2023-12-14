@@ -12,5 +12,6 @@ public class MoveHome
 public class NguaTrongChuong
 {
     public Transform[] trans;
+    public string tagNgua;
     public ColorEnum color;
 }
