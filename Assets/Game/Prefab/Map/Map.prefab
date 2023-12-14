@@ -119,6 +119,7 @@ GameObject:
   - component: {fileID: 4872418524663180894}
   - component: {fileID: 862392501177280529}
   - component: {fileID: 3086392487901357893}
+  - component: {fileID: 7692570486459539998}
   m_Layer: 0
   m_Name: Map
   m_TagString: Untagged
@@ -318,6 +319,27 @@ MonoBehaviour:
     - {fileID: 2685796327971813085}
     - {fileID: 7922892904665235807}
     color: 2
+--- !u!65 &7692570486459539998
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 911142666051011012}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 4, y: 0.4, z: 4}
+  m_Center: {x: 0, y: 0.2, z: 0}
 --- !u!1 &911319048421432777
 GameObject:
   m_ObjectHideFlags: 0
