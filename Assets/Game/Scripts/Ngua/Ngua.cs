@@ -6,4 +6,5 @@ public class Ngua : MonoBehaviour
 {
     public bool checkUse;
     public ColorEnum color;
+    public GameObject vfx;
 }

@@ -11,9 +11,13 @@ public class ManagerGame : MonoBehaviour
     public ColorEnum colorCurrent;
     public int index = 0;
     public int endLoop = 0;
+    public bool chon = false;
     public List<GameObject> danhsachnguahientai;
     [SerializeField] private TextMeshProUGUI text;
     [SerializeField] private GameObject[] lights;
+    public List<Transform> waypoints;
+    public int currentWaypointIndex = 0;
+    public GameObject nguaChoose;
     void Start()
     {
         dice.ResetDice();
@@ -37,6 +41,10 @@ public class ManagerGame : MonoBehaviour
             {
                 lights[i].SetActive(false);
             }
+        }
+        if (chon)
+        {
+            KiemTraDiChuyen();
         }
     }
 
@@ -78,13 +86,13 @@ public class ManagerGame : MonoBehaviour
         else
         {
             text.text = "Hãy chọn con ngựa bạn muốn di chuyển!!";
-            Debug.Log("Co ngua");
+            ChonNguaTrenMap();
         }
     }
 
     private void KhongCoNguaTrenMap()
     {
-        if(dice.index == 6)
+        if (dice.index == 6)
         {
             text.text = "Bạn không có ngựa trên sân nên sẽ tự động xuất chuồng cho bạn!!";
             XuatChuong();
@@ -120,7 +128,14 @@ public class ManagerGame : MonoBehaviour
             }
             Vector3 vc = transXuat.transform.position;
             vc.y += 0.5f;
-            ngua.transform.DOMove(vc, 5).SetEase(Ease.Linear).OnKill(() =>
+            foreach(XuatChuong xuat in map.listXuatChuong)
+            {
+                if(xuat.color == nguaclass.color)
+                {
+                    ngua.transform.SetParent(xuat.xuatTras.transform);
+                }
+            }
+            ngua.transform.DOMove(vc, 1).SetEase(Ease.InBounce).OnKill(() =>
             {
                 ResetLuot();
                 text.text = "6 rồi roll tiếp nhé <3";
@@ -131,19 +146,213 @@ public class ManagerGame : MonoBehaviour
 
     private void ResetLuot()
     {
+        text.text = "Lượt đi đội " + colorCurrent;
         dice.ResetDice();
+        ResetVFX();
         danhsachnguahientai.Clear();
+        nguaChoose = null;
         endLoop = 0;
     }
 
-    private void ChuyenLuot()
+    private void ResetVFX()
+    {
+        foreach (GameObject game in danhsachnguahientai)
+        {
+            Ngua ngua = game.GetComponent<Ngua>();
+            if (ngua != null)
+            {
+                ngua.vfx.SetActive(false);
+            }
+        }
+    }
+
+    public void ChuyenLuot()
     {
         index++;
-        if(index > 3)
+        if (index > 3)
         {
             index = 0;
         }
         colorCurrent = listEnums[index];
         ResetLuot();
+        
+    }
+
+    private void ChonNguaTrenMap()
+    {
+        chon = true;
+    }
+
+    private void KiemTraDiChuyen()
+    {
+        if (Input.GetMouseButtonDown(0))
+        {
+            Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
+            RaycastHit hit;
+            if (Physics.Raycast(ray, out hit))
+            {
+                GameObject clickedObject = hit.collider.gameObject;
+                if(clickedObject != null)
+                {
+                    ResetVFX();
+                    nguaChoose = null;
+                    foreach (GameObject game in danhsachnguahientai)
+                    {
+                        if(game == clickedObject)
+                        {
+                            Ngua ngua = game.GetComponent<Ngua>();
+                            if (ngua.checkUse)
+                            {
+                                ngua.vfx.SetActive(true);
+                            }
+                            nguaChoose = clickedObject;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+
+    public void DiChuyen()
+    {
+        if(nguaChoose != null)
+        {
+            Ngua ngua = nguaChoose.GetComponent<Ngua>();
+            bool coDungOChuongKhong = false;
+            foreach(XuatChuong xuat in map.listXuatChuong)
+            {
+                if(xuat.color == ngua.color)
+                {
+                    if(nguaChoose.transform.parent == xuat.xuatTras.transform)
+                    {
+                        coDungOChuongKhong = true;
+                        break;
+                    } 
+                }
+            }
+            if (coDungOChuongKhong)
+            {
+                MoveNgua(nguaChoose, ngua, dice.index - 1);
+            }
+            else
+            {
+                MoveNgua(nguaChoose, ngua, dice.index);
+            }
+        }
+    }
+
+    private void MoveNgua(GameObject nguaObj, Ngua nguaClass ,int number)
+    {
+        Transform vitriStart = null;
+        if(dice.index == number)
+        {
+            vitriStart = nguaObj.transform.parent;
+        }
+        else
+        {
+            foreach(XuatChuong xuat in map.listXuatChuong)
+            {
+                if(xuat.color == nguaClass.color)
+                {
+                    vitriStart = xuat.nextTras.transform;
+                }
+            }
+        }
+        if(vitriStart.transform.childCount <= 1)
+        {
+            int index = 0;
+            bool checkmove = true;
+            for(int i = 0; i < map.listTransMove.Length; i++)
+            {
+                if(vitriStart == map.listTransMove[i])
+                {
+                    index = i;
+                }
+            }
+            for(int i = index; i <= number + index; i++)
+            {
+                if(index > map.listTransMove.Length - 1)
+                {
+                    index = 0;
+                }
+                else
+                {
+                    if (map.listTransMove[index].childCount > 0 && vitriStart != map.listTransMove[index])
+                    {
+                        Debug.Log(1);
+                        checkmove = false;
+                    }
+                    else
+                    {
+                        waypoints.Add(map.listTransMove[i]);
+                    }
+                }
+            }
+            if (checkmove)
+            {
+                MoveToNextWaypoint(index + number, nguaObj);
+            }
+            else
+            {
+                waypoints.Clear();
+            }
+        }
+    }
+
+    
+
+    void MoveToNextWaypoint(int index, GameObject ngua)
+    {
+        if (currentWaypointIndex < waypoints.Count)
+        {
+            Vector3 vc = waypoints[currentWaypointIndex].position;
+            vc.y += 0.5f;
+            nguaChoose.transform.DOMove(vc, 1).SetEase(Ease.Linear).OnComplete(() =>
+            {
+                currentWaypointIndex++;
+                MoveToNextWaypoint(index, ngua);
+            });
+        }
+        else
+        {
+            if(index >= map.listTransMove.Length)
+            {
+                index = index - map.listTransMove.Length;
+            }
+            ngua.transform.SetParent(map.listTransMove[index]);
+            waypoints.Clear();
+            currentWaypointIndex = 0;
+            chon = false;
+            ChuyenLuot();
+        }
+    }
+
+    public void CheckButtonClickXuatChuong()
+    {
+        if(dice.index == 6)
+        {
+            bool check = false;
+            foreach(XuatChuong xuat in map.listXuatChuong)
+            {
+                if(xuat.color == colorCurrent)
+                {
+                    int i = xuat.xuatTras.transform.childCount;
+                    if(i <= 0)
+                    {
+                        check = true;
+                    }
+                }
+            }
+            if (check)
+            {
+                XuatChuong();
+            }
+            else
+            {
+                text.text = "Bạn không thể xuất chuồng nếu có ngựa đang đứng trên ô Start";
+            }
+        }
     }
 }
